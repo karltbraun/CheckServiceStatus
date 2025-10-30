@@ -1,3 +1,4 @@
+import asyncio
 import json
 import time
 from dataclasses import dataclass
@@ -167,7 +168,7 @@ def CheckWebsites(targets: List[WebsiteTarget], mqtt_config: MQTTConfig):
             pass
 
 
-def main():
+async def main():
     time_between_checks_ms = 60000  # 60 seconds
 
     # Define expected strings
@@ -197,7 +198,7 @@ def main():
         ),
     ]
 
-    # Convert milliseconds to seconds for time.sleep()
+    # Convert milliseconds to seconds for asyncio.sleep()
     time_between_checks_seconds = time_between_checks_ms / 1000.0
 
     print("Starting website monitoring loop...")
@@ -215,7 +216,7 @@ def main():
             print(
                 f"--- Completed checks, waiting {time_between_checks_seconds}s until next run ---"
             )
-            time.sleep(time_between_checks_seconds)
+            await asyncio.sleep(time_between_checks_seconds)
     except KeyboardInterrupt:
         print("\nMonitoring stopped by user (Ctrl+C)")
     except Exception as e:
@@ -224,4 +225,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
