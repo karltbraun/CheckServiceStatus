@@ -210,11 +210,11 @@ async def main():
     try:
         while True:
             print(
-                f"\n--- Starting website checks at {time.strftime('%Y-%m-%d %H:%M:%S')} ---"
+                f"\n*** Starting website checks at {time.strftime('%Y-%m-%d %H:%M:%S')} ***"
             )
             CheckWebsites(targets, mqtt_config)
             print(
-                f"--- Completed checks, waiting {time_between_checks_seconds}s until next run ---"
+                f"*** Completed checks, waiting {time_between_checks_seconds}s until next run ***"
             )
             await asyncio.sleep(time_between_checks_seconds)
     except KeyboardInterrupt:
