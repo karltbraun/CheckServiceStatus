@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  website-monitor:
+    build: .
+    container_name: website-monitor
+    restart: unless-stopped
+    
+    # Option 1: Direct environment variables (recommended for Portainer)
+    environment:
+      - MQTT_BROKER=n-vultr2
+      - MQTT_PORT=1883
+      - MQTT_USERNAME=
+      - MQTT_PASSWORD=
+      - CHECK_INTERVAL_MS=5000
+      # - CHECK_INTERVAL_MS=300000
+      - TZ=America/Los_Angeles  # Pacific Time Zone
+    
+    # Option 2: Use .env file (uncomment and comment out environment section above)
+    # env_file:
+    #   - .env
+    
+    networks:
+      - monitoring
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # Uncomment if you need to expose a health check port
+    # ports:
+    #   - "8080:8080"
+
+networks:
+  monitoring:
+    driver: bridge

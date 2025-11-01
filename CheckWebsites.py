@@ -1,8 +1,11 @@
 import asyncio
 import json
+import os
 import time
 from dataclasses import dataclass
+from datetime import datetime
 from typing import List, Optional
+from zoneinfo import ZoneInfo
 
 import paho.mqtt.client as mqtt
 
@@ -45,7 +48,7 @@ def publish_to_mqtt(
     """
     # Publish the result
     result_topic = (
-        f"KTBMES/Twix/websites/{website_name}/{method.lower()}/result"
+        f"KTBMES/websites/{website_name}/{method.lower()}/result"
     )
     result_payload = str(
         result_value
@@ -57,9 +60,20 @@ def publish_to_mqtt(
             f"Published to MQTT - Topic: {result_topic}, Payload: {result_payload}"
         )
 
-        # Publish the timestamp
-        timestamp_topic = f"KTBMES/Twix/websites/{website_name}/{method.lower()}/last_published"
-        current_time = time.strftime("%Y-%m-%d %H:%M")
+        # Publish the timestamp with explicit timezone
+        timestamp_topic = f"KTBMES/websites/{website_name}/{method.lower()}/last_published"
+        # Get timezone from environment or default to Pacific timezone
+        timezone_name = os.getenv(
+            "TZ", "America/Los_Angeles"
+        )  # Pacific Time Zone default
+        try:
+            local_tz = ZoneInfo(timezone_name)
+            current_time = datetime.now(local_tz).strftime(
+                "%Y-%m-%d %H:%M"
+            )
+        except Exception:
+            # Fallback to UTC if timezone not available
+            current_time = datetime.now().strftime("%Y-%m-%d %H:%M UTC")
 
         client.publish(timestamp_topic, current_time, qos=1, retain=True)
         print(
@@ -169,7 +183,14 @@ def CheckWebsites(targets: List[WebsiteTarget], mqtt_config: MQTTConfig):
 
 
 async def main():
-    time_between_checks_ms = 60000  # 60 seconds
+    # Get configuration from environment variables with defaults
+    time_between_checks_ms = int(
+        os.getenv("CHECK_INTERVAL_MS", "60000")
+    )  # 60 seconds default
+    mqtt_broker = os.getenv("MQTT_BROKER", "vultr2")
+    mqtt_port = int(os.getenv("MQTT_PORT", "1883"))
+    mqtt_username = os.getenv("MQTT_USERNAME") or None
+    mqtt_password = os.getenv("MQTT_PASSWORD") or None
 
     # Define expected strings
     expect_string_ktbcs: str = (
@@ -184,7 +205,10 @@ async def main():
 
     # Create MQTT configuration
     mqtt_config = MQTTConfig(
-        broker="vultr2", port=1883, username=None, password=None
+        broker=mqtt_broker,
+        port=mqtt_port,
+        username=mqtt_username,
+        password=mqtt_password,
     )
 
     # Create website targets
@@ -210,11 +234,15 @@ async def main():
     # Convert milliseconds to seconds for asyncio.sleep()
     time_between_checks_seconds = time_between_checks_ms / 1000.0
 
-    print("Starting website monitoring loop...")
+    print("=== Website Monitor Starting ===")
+    print(f"MQTT Broker: {mqtt_broker}:{mqtt_port}")
+    print(f"MQTT Auth: {'Yes' if mqtt_username else 'No'}")
     print(
-        f"Checking websites every {time_between_checks_ms}ms ({time_between_checks_seconds}s)"
+        f"Check Interval: {time_between_checks_ms}ms ({time_between_checks_seconds}s)"
     )
+    print(f"Monitoring {len(targets)} targets")
     print("Press Ctrl+C to stop")
+    print("=" * 40)
 
     try:
         while True:
