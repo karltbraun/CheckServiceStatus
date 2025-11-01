@@ -35,18 +35,24 @@ docker-compose down
    - `MQTT_USERNAME=your-username` (optional)
    - `MQTT_PASSWORD=your-password` (optional)
    - `CHECK_INTERVAL_MS=60000`
+   - `TZ=America/Los_Angeles` (your timezone)
+   - `PUB_ROOT=KTBMES` (MQTT topic root)
+   - `PUB_SOURCE=your-host-name` (source identifier)
 4. Set restart policy to "Unless stopped"
 5. Deploy
 
 ## Environment Variables
 
-| Variable            | Default   | Description                    |
-| ------------------- | --------- | ------------------------------ |
-| `MQTT_BROKER`       | `vultr2`  | MQTT broker hostname           |
-| `MQTT_PORT`         | `1883`    | MQTT broker port               |
-| `MQTT_USERNAME`     | _(empty)_ | MQTT username (optional)       |
-| `MQTT_PASSWORD`     | _(empty)_ | MQTT password (optional)       |
-| `CHECK_INTERVAL_MS` | `60000`   | Check interval in milliseconds |
+| Variable            | Default           | Description                          |
+| ------------------- | ----------------- | ------------------------------------ |
+| `MQTT_BROKER`       | `vultr2`          | MQTT broker hostname                 |
+| `MQTT_PORT`         | `1883`            | MQTT broker port                     |
+| `MQTT_USERNAME`     | _(empty)_         | MQTT username (optional)             |
+| `MQTT_PASSWORD`     | _(empty)_         | MQTT password (optional)             |
+| `CHECK_INTERVAL_MS` | `60000`           | Check interval in milliseconds       |
+| `TZ`                | `America/Los_Angeles` | Timezone for timestamps          |
+| `PUB_ROOT`          | `KTBMES`          | Root of MQTT topic structure        |
+| `PUB_SOURCE`        | `unknown-host`    | Source identifier for this instance  |
 
 ## Building the Image
 
@@ -62,13 +68,15 @@ docker build -t website-monitor:v1.0 .
 
 The application publishes to these topics:
 
-- `KTBMES/Twix/websites/{site_name}/{protocol}/result` - `"true"` or `"false"`
-- `KTBMES/Twix/websites/{site_name}/{protocol}/last_published` - Timestamp
+- `{PUB_ROOT}/{PUB_SOURCE}/{site_name}/{protocol}/result` - `"true"` or `"false"`
+- `{PUB_ROOT}/{PUB_SOURCE}/{site_name}/{protocol}/last_published` - Timestamp
 
-Example:
+Example (with `PUB_ROOT=KTBMES` and `PUB_SOURCE=docker-host`):
 
-- `KTBMES/Twix/websites/ktbcs/https/result`
-- `KTBMES/Twix/websites/ktbcs/https/last_published`
+- `KTBMES/docker-host/ktbcs/https/result`
+- `KTBMES/docker-host/ktbcs/https/last_published`
+- `KTBMES/docker-host/nas/http/result`
+- `KTBMES/docker-host/nas/http/last_published`
 
 ## Monitored Sites
 

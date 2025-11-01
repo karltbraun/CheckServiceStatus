@@ -36,7 +36,10 @@ def publish_to_mqtt(
     broker_port=1883,
 ):
     """
-    Publish the check result to MQTT broker.
+    Publish the check result and timestamp to MQTT broker.
+
+    Topics are constructed as: {PUB_ROOT}/{PUB_SOURCE}/{website_name}/{method}/result
+    and: {PUB_ROOT}/{PUB_SOURCE}/{website_name}/{method}/last_published
 
     Args:
         client: MQTT client instance
@@ -46,22 +49,32 @@ def publish_to_mqtt(
         broker_host: MQTT broker hostname
         broker_port: MQTT broker port (default: 1883)
     """
-    # Publish the result
-    result_topic = (
-        f"KTBMES/websites/{website_name}/{method.lower()}/result"
+    # Get MQTT topic configuration from environment variables
+    pub_root = os.getenv("PUB_ROOT", "MISSING_ROOT")  # Default fallback
+    pub_source = os.getenv(
+        "PUB_SOURCE", "MISSING_SOURCE"
+    )  # Default fallback
+
+    # Define MQTT topics (consolidated for easy maintenance)
+    base_topic = (
+        f"{pub_root}/{pub_source}/websites/{website_name}/{method.lower()}"
     )
+    result_topic = f"{base_topic}/result"
+    timestamp_topic = f"{base_topic}/last_published"
+
+    # Prepare payload
     result_payload = str(
         result_value
     ).lower()  # Convert boolean to lowercase string
 
     try:
+        # Publish the result
         client.publish(result_topic, result_payload, qos=1, retain=True)
         print(
             f"Published to MQTT - Topic: {result_topic}, Payload: {result_payload}"
         )
 
         # Publish the timestamp with explicit timezone
-        timestamp_topic = f"KTBMES/websites/{website_name}/{method.lower()}/last_published"
         # Get timezone from environment or default to Pacific timezone
         timezone_name = os.getenv(
             "TZ", "America/Los_Angeles"
