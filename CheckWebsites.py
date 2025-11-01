@@ -178,6 +178,9 @@ async def main():
     expect_string_skinner: str = (
         "<title>Skinner Editorial Portfolio</title>"
     )
+    expect_string_nas: str = (
+        "<title>KTBMES-NAS-01"  # Partial string match within title tag
+    )
 
     # Create MQTT configuration
     mqtt_config = MQTTConfig(
@@ -195,6 +198,12 @@ async def main():
             "skinner",
             "https://skinnereditorial.com",
             expect_string_skinner,
+        ),
+        # HTTP-only website (no HTTPS variant)
+        WebsiteTarget(
+            "nas",
+            "http://100.114.180.102:5000/#/sign",
+            expect_string_nas,
         ),
     ]
 
